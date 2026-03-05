@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Paint Gallery</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>🎨 Paint Gallery</h1>
+      <nav>
+        <button class="btn">로그인</button>
+        <button class="btn primary">그림 올리기</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h2>그림만 올리는 SNS</h2>
+        <p>비공개로 보관하거나, 공개로 전시해요.</p>
+      </section>
+
+      <section class="tabs">
+        <button class="tab active" data-tab="public">공개 갤러리</button>
+        <button class="tab" data-tab="private">내 비공개 보관함</button>
+      </section>
+
+      <section id="public" class="grid active">
+        <article class="card"><div class="thumb">🌄</div><h3>노을 그림</h3><p>공개</p></article>
+        <article class="card"><div class="thumb">🌊</div><h3>바다 스케치</h3><p>공개</p></article>
+        <article class="card"><div class="thumb">🌳</div><h3>숲 드로잉</h3><p>공개</p></article>
+      </section>
+
+      <section id="private" class="grid">
+        <article class="card"><div class="thumb">🔒</div><h3>연습장 1</h3><p>비공개</p></article>
+        <article class="card"><div class="thumb">🔒</div><h3>연습장 2</h3><p>비공개</p></article>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
