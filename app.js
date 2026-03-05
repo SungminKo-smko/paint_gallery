@@ -12,6 +12,20 @@ const toast = document.getElementById('toast');
 
 const canvas = document.getElementById('paintCanvas');
 const ctx = canvas.getContext('2d');
+
+function setupCanvasResolution() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const displayWidth = Math.max(1, Math.floor(rect.width));
+  const displayHeight = Math.max(1, Math.floor(rect.height));
+
+  canvas.width = Math.floor(displayWidth * dpr);
+  canvas.height = Math.floor(displayHeight * dpr);
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+}
 const colorPicker = document.getElementById('colorPicker');
 const brushSize = document.getElementById('brushSize');
 const brushSizeLabel = document.getElementById('brushSizeLabel');
@@ -22,8 +36,9 @@ const clearBtn = document.getElementById('clearBtn');
 let drawing = false;
 let eraserMode = false;
 
-ctx.lineCap = 'round';
-ctx.lineJoin = 'round';
+setupCanvasResolution();
+window.addEventListener('resize', setupCanvasResolution);
+
 ctx.strokeStyle = colorPicker.value;
 ctx.lineWidth = Number(brushSize.value);
 
@@ -35,10 +50,13 @@ function showToast(text) {
 
 function getPos(e) {
   const rect = canvas.getBoundingClientRect();
-  if (e.touches && e.touches[0]) {
-    return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
-  }
-  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  const point = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+
+  const x = point.clientX - rect.left;
+  const y = point.clientY - rect.top;
+
+  // CSS 픽셀 좌표 그대로 사용 (ctx는 dpr 변환 적용됨)
+  return { x, y };
 }
 
 function startDraw(e) {
