@@ -159,3 +159,16 @@ body.drawing-mode #paintCanvas {
   background: #fff;
   border: 1px solid #d8dcff;
 }
+
+
+.btn.danger { border-color: #b33a55; color: #ffdbe4; }
+.row.between { justify-content: space-between; align-items: center; }
+.view-modal { width: min(700px, 100%); }
+.view-image {
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #d8dcff;
+}
