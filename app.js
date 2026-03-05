@@ -30,12 +30,27 @@ function setupCanvasResolution() {
   const displayWidth = Math.max(1, Math.floor(rect.width));
   const displayHeight = Math.max(1, Math.floor(rect.height));
 
+  // 리사이즈 전 그림 백업
+  const prev = document.createElement('canvas');
+  prev.width = canvas.width;
+  prev.height = canvas.height;
+  const prevCtx = prev.getContext('2d');
+  if (canvas.width > 0 && canvas.height > 0) {
+    prevCtx.drawImage(canvas, 0, 0);
+  }
+
   canvas.width = Math.floor(displayWidth * dpr);
   canvas.height = Math.floor(displayHeight * dpr);
 
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
+
+  // 이전 그림 복원(새 비율에 맞춰 스케일)
+  if (prev.width > 0 && prev.height > 0) {
+    ctx.drawImage(prev, 0, 0, prev.width, prev.height, 0, 0, displayWidth, displayHeight);
+  }
+
   ctx.strokeStyle = eraserMode ? '#ffffff' : colorPicker.value;
   ctx.lineWidth = Number(brushSize.value);
 }
@@ -57,7 +72,7 @@ function toggleDrawingMode(isOn) {
     setupCanvasResolution();
   });
 
-  if (isOn) showToast('전체화면 그리기 모드');
+  showToast(isOn ? '전체화면 그리기 모드' : '일반 화면으로 돌아왔어요.');
 }
 
 function getPos(e) {
