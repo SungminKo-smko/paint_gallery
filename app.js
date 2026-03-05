@@ -23,21 +23,47 @@ const clearBtn = document.getElementById('clearBtn');
 
 let drawing = false;
 let eraserMode = false;
+let resizeTimer;
+
+// 마지막 정상 그림을 보관하는 버퍼
+const drawingBuffer = document.createElement('canvas');
+const drawingBufferCtx = drawingBuffer.getContext('2d');
+
+function cacheCurrentDrawing() {
+  if (canvas.width < 2 || canvas.height < 2) return;
+  drawingBuffer.width = canvas.width;
+  drawingBuffer.height = canvas.height;
+  drawingBufferCtx.clearRect(0, 0, drawingBuffer.width, drawingBuffer.height);
+  drawingBufferCtx.drawImage(canvas, 0, 0);
+}
+
+function restoreFromBuffer(displayWidth, displayHeight, dpr) {
+  if (drawingBuffer.width < 2 || drawingBuffer.height < 2) return;
+  ctx.drawImage(
+    drawingBuffer,
+    0,
+    0,
+    drawingBuffer.width,
+    drawingBuffer.height,
+    0,
+    0,
+    displayWidth,
+    displayHeight
+  );
+}
 
 function setupCanvasResolution() {
-  const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
   const displayWidth = Math.max(1, Math.floor(rect.width));
   const displayHeight = Math.max(1, Math.floor(rect.height));
 
-  // 리사이즈 전 그림 백업
-  const prev = document.createElement('canvas');
-  prev.width = canvas.width;
-  prev.height = canvas.height;
-  const prevCtx = prev.getContext('2d');
-  if (canvas.width > 0 && canvas.height > 0) {
-    prevCtx.drawImage(canvas, 0, 0);
-  }
+  // 레이아웃 전환 중(0 또는 매우 작은 값)에는 리사이즈를 건너뜀
+  if (displayWidth < 80 || displayHeight < 80) return;
+
+  const dpr = window.devicePixelRatio || 1;
+
+  // 리사이즈 전 현재 그림 백업
+  cacheCurrentDrawing();
 
   canvas.width = Math.floor(displayWidth * dpr);
   canvas.height = Math.floor(displayHeight * dpr);
@@ -46,17 +72,17 @@ function setupCanvasResolution() {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  // 이전 그림 복원(새 비율에 맞춰 스케일)
-  if (prev.width > 0 && prev.height > 0) {
-    ctx.drawImage(prev, 0, 0, prev.width, prev.height, 0, 0, displayWidth, displayHeight);
-  }
+  restoreFromBuffer(displayWidth, displayHeight, dpr);
 
   ctx.strokeStyle = eraserMode ? '#ffffff' : colorPicker.value;
   ctx.lineWidth = Number(brushSize.value);
 }
 
 setupCanvasResolution();
-window.addEventListener('resize', setupCanvasResolution);
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(setupCanvasResolution, 120);
+});
 
 function showToast(text) {
   toast.textContent = text;
@@ -65,12 +91,17 @@ function showToast(text) {
 }
 
 function toggleDrawingMode(isOn) {
+  // 모드 전환 직전 그림 저장
+  cacheCurrentDrawing();
+
   document.body.classList.toggle('drawing-mode', isOn);
   exitDrawModeBtn.classList.toggle('hidden', !isOn);
 
-  requestAnimationFrame(() => {
+  // 레이아웃 안정화 후 복원
+  setTimeout(() => {
     setupCanvasResolution();
-  });
+    cacheCurrentDrawing();
+  }, 120);
 
   showToast(isOn ? '전체화면 그리기 모드' : '일반 화면으로 돌아왔어요.');
 }
@@ -98,15 +129,23 @@ function draw(e) {
 }
 
 function endDraw() {
+  if (!drawing) return;
   drawing = false;
   ctx.closePath();
+  cacheCurrentDrawing();
 }
 
 canvas.addEventListener('mousedown', startDraw);
 canvas.addEventListener('mousemove', draw);
 window.addEventListener('mouseup', endDraw);
-canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); }, { passive: false });
-canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, { passive: false });
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  startDraw(e);
+}, { passive: false });
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  draw(e);
+}, { passive: false });
 canvas.addEventListener('touchend', endDraw);
 
 colorPicker.addEventListener('input', () => {
@@ -132,6 +171,7 @@ penBtn.addEventListener('click', () => {
 
 clearBtn.addEventListener('click', () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  cacheCurrentDrawing();
   showToast('캔버스를 비웠어요.');
 });
 
