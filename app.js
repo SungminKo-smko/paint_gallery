@@ -12,6 +12,9 @@ const drawModeBtn = document.getElementById('drawModeBtn');
 const exitDrawModeBtn = document.getElementById('exitDrawModeBtn');
 const toast = document.getElementById('toast');
 
+const publicGrid = document.getElementById('public');
+const privateGrid = document.getElementById('private');
+
 const canvas = document.getElementById('paintCanvas');
 const ctx = canvas.getContext('2d');
 const colorPicker = document.getElementById('colorPicker');
@@ -25,6 +28,8 @@ let drawing = false;
 let eraserMode = false;
 let resizeTimer;
 
+const STORAGE_KEY = 'paint_gallery_drawings_v1';
+
 // 마지막 정상 그림을 보관하는 버퍼
 const drawingBuffer = document.createElement('canvas');
 const drawingBufferCtx = drawingBuffer.getContext('2d');
@@ -37,7 +42,7 @@ function cacheCurrentDrawing() {
   drawingBufferCtx.drawImage(canvas, 0, 0);
 }
 
-function restoreFromBuffer(displayWidth, displayHeight, dpr) {
+function restoreFromBuffer(displayWidth, displayHeight) {
   if (drawingBuffer.width < 2 || drawingBuffer.height < 2) return;
   ctx.drawImage(
     drawingBuffer,
@@ -57,12 +62,10 @@ function setupCanvasResolution() {
   const displayWidth = Math.max(1, Math.floor(rect.width));
   const displayHeight = Math.max(1, Math.floor(rect.height));
 
-  // 레이아웃 전환 중(0 또는 매우 작은 값)에는 리사이즈를 건너뜀
   if (displayWidth < 80 || displayHeight < 80) return;
 
   const dpr = window.devicePixelRatio || 1;
 
-  // 리사이즈 전 현재 그림 백업
   cacheCurrentDrawing();
 
   canvas.width = Math.floor(displayWidth * dpr);
@@ -72,7 +75,7 @@ function setupCanvasResolution() {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  restoreFromBuffer(displayWidth, displayHeight, dpr);
+  restoreFromBuffer(displayWidth, displayHeight);
 
   ctx.strokeStyle = eraserMode ? '#ffffff' : colorPicker.value;
   ctx.lineWidth = Number(brushSize.value);
@@ -91,13 +94,10 @@ function showToast(text) {
 }
 
 function toggleDrawingMode(isOn) {
-  // 모드 전환 직전 그림 저장
   cacheCurrentDrawing();
-
   document.body.classList.toggle('drawing-mode', isOn);
   exitDrawModeBtn.classList.toggle('hidden', !isOn);
 
-  // 레이아웃 안정화 후 복원
   setTimeout(() => {
     setupCanvasResolution();
     cacheCurrentDrawing();
@@ -135,17 +135,101 @@ function endDraw() {
   cacheCurrentDrawing();
 }
 
+function getSavedDrawings() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function setSavedDrawings(list) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
+
+function createDrawingCard(item) {
+  const article = document.createElement('article');
+  article.className = 'card';
+  article.innerHTML = `
+    <img class="thumb-image" src="${item.imageData}" alt="${item.title}" />
+    <h3>${item.title}</h3>
+    <p>${item.visibility === 'public' ? '공개' : '비공개'}</p>
+  `;
+  return article;
+}
+
+function renderSavedDrawings() {
+  const saved = getSavedDrawings();
+
+  publicGrid.querySelectorAll('.user-drawing').forEach((el) => el.remove());
+  privateGrid.querySelectorAll('.user-drawing').forEach((el) => el.remove());
+
+  saved.forEach((item) => {
+    const card = createDrawingCard(item);
+    card.classList.add('user-drawing');
+    if (item.visibility === 'public') {
+      publicGrid.prepend(card);
+    } else {
+      privateGrid.prepend(card);
+    }
+  });
+}
+
+function saveCurrentDrawing() {
+  const title = document.getElementById('drawingTitle').value.trim();
+  const visibility = document.getElementById('visibilitySelect').value;
+
+  if (!title) {
+    showToast('그림 제목을 입력해요.');
+    return;
+  }
+
+  cacheCurrentDrawing();
+
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = drawingBuffer.width;
+  tempCanvas.height = drawingBuffer.height;
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCtx.drawImage(drawingBuffer, 0, 0);
+
+  const imageData = tempCanvas.toDataURL('image/png');
+
+  const item = {
+    id: Date.now(),
+    title,
+    visibility,
+    imageData,
+    createdAt: new Date().toISOString(),
+  };
+
+  const saved = getSavedDrawings();
+  saved.unshift(item);
+  setSavedDrawings(saved);
+  renderSavedDrawings();
+
+  saveModal.classList.add('hidden');
+  showToast(`저장 완료: ${title} (${visibility === 'public' ? '공개' : '비공개'})`);
+}
+
 canvas.addEventListener('mousedown', startDraw);
 canvas.addEventListener('mousemove', draw);
 window.addEventListener('mouseup', endDraw);
-canvas.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  startDraw(e);
-}, { passive: false });
-canvas.addEventListener('touchmove', (e) => {
-  e.preventDefault();
-  draw(e);
-}, { passive: false });
+canvas.addEventListener(
+  'touchstart',
+  (e) => {
+    e.preventDefault();
+    startDraw(e);
+  },
+  { passive: false }
+);
+canvas.addEventListener(
+  'touchmove',
+  (e) => {
+    e.preventDefault();
+    draw(e);
+  },
+  { passive: false }
+);
 canvas.addEventListener('touchend', endDraw);
 
 colorPicker.addEventListener('input', () => {
@@ -200,11 +284,6 @@ authSubmitBtn.addEventListener('click', () => {
 
 saveBtn.addEventListener('click', () => saveModal.classList.remove('hidden'));
 saveCloseBtn.addEventListener('click', () => saveModal.classList.add('hidden'));
+saveConfirmBtn.addEventListener('click', saveCurrentDrawing);
 
-saveConfirmBtn.addEventListener('click', () => {
-  const title = document.getElementById('drawingTitle').value.trim();
-  const visibility = document.getElementById('visibilitySelect').value;
-  if (!title) return showToast('그림 제목을 입력해요.');
-  saveModal.classList.add('hidden');
-  showToast(`저장 준비 완료: ${title} (${visibility === 'public' ? '공개' : '비공개'})`);
-});
+renderSavedDrawings();
