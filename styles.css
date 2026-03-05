@@ -27,7 +27,31 @@ body {
 .btn.primary { background: #5f6fff; color: white; border: none; }
 main { max-width: 980px; margin: 0 auto; padding: 20px; }
 .hero { margin-bottom: 18px; }
-.tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.card {
+  background: #1a1f3d;
+  border: 1px solid #2f376e;
+  border-radius: 14px;
+  padding: 12px;
+}
+.studio { margin-bottom: 16px; }
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.tools label { color: #c8ceff; }
+#brushSizeLabel { margin-left: 6px; color: #aeb5ee; }
+#paintCanvas {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #d8dcff;
+  touch-action: none;
+}
+.tabs { display: flex; gap: 8px; margin: 14px 0; }
 .tab {
   padding: 10px 14px;
   border-radius: 10px;
@@ -39,12 +63,6 @@ main { max-width: 980px; margin: 0 auto; padding: 20px; }
 .tab.active { background: #5f6fff; color: #fff; border-color: transparent; }
 .grid { display: none; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 12px; }
 .grid.active { display: grid; }
-.card {
-  background: #1a1f3d;
-  border: 1px solid #2f376e;
-  border-radius: 14px;
-  padding: 12px;
-}
 .thumb {
   height: 110px;
   border-radius: 10px;
@@ -55,7 +73,6 @@ main { max-width: 980px; margin: 0 auto; padding: 20px; }
 }
 .card h3 { margin: 10px 0 4px; }
 .card p { margin: 0; color: #aeb5ee; }
-
 .hidden { display: none !important; }
 .modal-backdrop {
   position: fixed;
@@ -72,12 +89,8 @@ main { max-width: 980px; margin: 0 auto; padding: 20px; }
   border-radius: 14px;
   padding: 16px;
 }
-.modal label {
-  display: block;
-  margin-top: 10px;
-  color: #c8ceff;
-}
-.modal input {
+.modal label { display: block; margin-top: 10px; color: #c8ceff; }
+.modal input, .modal select {
   width: 100%;
   margin-top: 6px;
   padding: 10px;

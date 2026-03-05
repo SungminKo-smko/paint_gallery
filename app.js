@@ -1,17 +1,97 @@
 const tabs = document.querySelectorAll('.tab');
 const grids = document.querySelectorAll('.grid');
 const authModal = document.getElementById('authModal');
+const saveModal = document.getElementById('saveModal');
 const loginOpenBtn = document.getElementById('loginOpenBtn');
 const authCloseBtn = document.getElementById('authCloseBtn');
 const authSubmitBtn = document.getElementById('authSubmitBtn');
-const uploadBtn = document.getElementById('uploadBtn');
+const saveBtn = document.getElementById('saveBtn');
+const saveCloseBtn = document.getElementById('saveCloseBtn');
+const saveConfirmBtn = document.getElementById('saveConfirmBtn');
 const toast = document.getElementById('toast');
+
+const canvas = document.getElementById('paintCanvas');
+const ctx = canvas.getContext('2d');
+const colorPicker = document.getElementById('colorPicker');
+const brushSize = document.getElementById('brushSize');
+const brushSizeLabel = document.getElementById('brushSizeLabel');
+const eraserBtn = document.getElementById('eraserBtn');
+const penBtn = document.getElementById('penBtn');
+const clearBtn = document.getElementById('clearBtn');
+
+let drawing = false;
+let eraserMode = false;
+
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+ctx.strokeStyle = colorPicker.value;
+ctx.lineWidth = Number(brushSize.value);
 
 function showToast(text) {
   toast.textContent = text;
   toast.classList.remove('hidden');
   setTimeout(() => toast.classList.add('hidden'), 1600);
 }
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  if (e.touches && e.touches[0]) {
+    return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+  }
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function startDraw(e) {
+  drawing = true;
+  const { x, y } = getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+}
+
+function draw(e) {
+  if (!drawing) return;
+  const { x, y } = getPos(e);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+}
+
+function endDraw() {
+  drawing = false;
+  ctx.closePath();
+}
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', draw);
+window.addEventListener('mouseup', endDraw);
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); }, { passive: false });
+canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, { passive: false });
+canvas.addEventListener('touchend', endDraw);
+
+colorPicker.addEventListener('input', () => {
+  if (!eraserMode) ctx.strokeStyle = colorPicker.value;
+});
+
+brushSize.addEventListener('input', () => {
+  ctx.lineWidth = Number(brushSize.value);
+  brushSizeLabel.textContent = brushSize.value;
+});
+
+eraserBtn.addEventListener('click', () => {
+  eraserMode = true;
+  ctx.strokeStyle = '#ffffff';
+  showToast('지우개 모드');
+});
+
+penBtn.addEventListener('click', () => {
+  eraserMode = false;
+  ctx.strokeStyle = colorPicker.value;
+  showToast('펜 모드');
+});
+
+clearBtn.addEventListener('click', () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  showToast('캔버스를 비웠어요.');
+});
 
 tabs.forEach((tab) => {
   tab.addEventListener('click', () => {
@@ -28,14 +108,18 @@ authCloseBtn.addEventListener('click', () => authModal.classList.add('hidden'));
 authSubmitBtn.addEventListener('click', () => {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
-  if (!email || !password) {
-    showToast('이메일과 비밀번호를 입력해요.');
-    return;
-  }
+  if (!email || !password) return showToast('이메일과 비밀번호를 입력해요.');
   authModal.classList.add('hidden');
   showToast('로그인 UI 확인 완료!');
 });
 
-uploadBtn.addEventListener('click', () => {
-  showToast('다음 단계: 그림 업로드 화면 만들기');
+saveBtn.addEventListener('click', () => saveModal.classList.remove('hidden'));
+saveCloseBtn.addEventListener('click', () => saveModal.classList.add('hidden'));
+
+saveConfirmBtn.addEventListener('click', () => {
+  const title = document.getElementById('drawingTitle').value.trim();
+  const visibility = document.getElementById('visibilitySelect').value;
+  if (!title) return showToast('그림 제목을 입력해요.');
+  saveModal.classList.add('hidden');
+  showToast(`저장 준비 완료: ${title} (${visibility === 'public' ? '공개' : '비공개'})`);
 });
