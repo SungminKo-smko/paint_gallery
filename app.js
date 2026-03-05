@@ -8,10 +8,21 @@ const authSubmitBtn = document.getElementById('authSubmitBtn');
 const saveBtn = document.getElementById('saveBtn');
 const saveCloseBtn = document.getElementById('saveCloseBtn');
 const saveConfirmBtn = document.getElementById('saveConfirmBtn');
+const drawModeBtn = document.getElementById('drawModeBtn');
+const exitDrawModeBtn = document.getElementById('exitDrawModeBtn');
 const toast = document.getElementById('toast');
 
 const canvas = document.getElementById('paintCanvas');
 const ctx = canvas.getContext('2d');
+const colorPicker = document.getElementById('colorPicker');
+const brushSize = document.getElementById('brushSize');
+const brushSizeLabel = document.getElementById('brushSizeLabel');
+const eraserBtn = document.getElementById('eraserBtn');
+const penBtn = document.getElementById('penBtn');
+const clearBtn = document.getElementById('clearBtn');
+
+let drawing = false;
+let eraserMode = false;
 
 function setupCanvasResolution() {
   const dpr = window.devicePixelRatio || 1;
@@ -25,22 +36,12 @@ function setupCanvasResolution() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
+  ctx.strokeStyle = eraserMode ? '#ffffff' : colorPicker.value;
+  ctx.lineWidth = Number(brushSize.value);
 }
-const colorPicker = document.getElementById('colorPicker');
-const brushSize = document.getElementById('brushSize');
-const brushSizeLabel = document.getElementById('brushSizeLabel');
-const eraserBtn = document.getElementById('eraserBtn');
-const penBtn = document.getElementById('penBtn');
-const clearBtn = document.getElementById('clearBtn');
-
-let drawing = false;
-let eraserMode = false;
 
 setupCanvasResolution();
 window.addEventListener('resize', setupCanvasResolution);
-
-ctx.strokeStyle = colorPicker.value;
-ctx.lineWidth = Number(brushSize.value);
 
 function showToast(text) {
   toast.textContent = text;
@@ -48,14 +49,22 @@ function showToast(text) {
   setTimeout(() => toast.classList.add('hidden'), 1600);
 }
 
+function toggleDrawingMode(isOn) {
+  document.body.classList.toggle('drawing-mode', isOn);
+  exitDrawModeBtn.classList.toggle('hidden', !isOn);
+
+  requestAnimationFrame(() => {
+    setupCanvasResolution();
+  });
+
+  if (isOn) showToast('전체화면 그리기 모드');
+}
+
 function getPos(e) {
   const rect = canvas.getBoundingClientRect();
   const point = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
-
   const x = point.clientX - rect.left;
   const y = point.clientY - rect.top;
-
-  // CSS 픽셀 좌표 그대로 사용 (ctx는 dpr 변환 적용됨)
   return { x, y };
 }
 
@@ -110,6 +119,9 @@ clearBtn.addEventListener('click', () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   showToast('캔버스를 비웠어요.');
 });
+
+drawModeBtn.addEventListener('click', () => toggleDrawingMode(true));
+exitDrawModeBtn.addEventListener('click', () => toggleDrawingMode(false));
 
 tabs.forEach((tab) => {
   tab.addEventListener('click', () => {
