@@ -11,14 +11,30 @@
       <h1>🎨 Paint Gallery</h1>
       <nav>
         <button class="btn" id="loginOpenBtn">로그인</button>
-        <button class="btn primary" id="uploadBtn">그림 올리기</button>
+        <button class="btn primary" id="saveBtn">그림 저장</button>
       </nav>
     </header>
 
     <main>
       <section class="hero">
-        <h2>그림만 올리는 SNS</h2>
-        <p>비공개로 보관하거나, 공개로 전시해요.</p>
+        <h2>웹에서 바로 그림 그리기</h2>
+        <p>그림을 그리고, 공개 또는 비공개로 저장해요.</p>
+      </section>
+
+      <section class="studio card">
+        <div class="tools">
+          <label>색상
+            <input type="color" id="colorPicker" value="#5f6fff" />
+          </label>
+          <label>굵기
+            <input type="range" id="brushSize" min="1" max="30" value="6" />
+            <span id="brushSizeLabel">6</span>
+          </label>
+          <button class="btn" id="eraserBtn">지우개</button>
+          <button class="btn" id="penBtn">펜</button>
+          <button class="btn" id="clearBtn">전체 지우기</button>
+        </div>
+        <canvas id="paintCanvas" width="900" height="520" aria-label="그림 그리는 캔버스"></canvas>
       </section>
 
       <section class="tabs">
@@ -29,12 +45,10 @@
       <section id="public" class="grid active">
         <article class="card"><div class="thumb">🌄</div><h3>노을 그림</h3><p>공개</p></article>
         <article class="card"><div class="thumb">🌊</div><h3>바다 스케치</h3><p>공개</p></article>
-        <article class="card"><div class="thumb">🌳</div><h3>숲 드로잉</h3><p>공개</p></article>
       </section>
 
       <section id="private" class="grid">
         <article class="card"><div class="thumb">🔒</div><h3>연습장 1</h3><p>비공개</p></article>
-        <article class="card"><div class="thumb">🔒</div><h3>연습장 2</h3><p>비공개</p></article>
       </section>
     </main>
 
@@ -51,6 +65,25 @@
         <div class="row">
           <button class="btn" id="authCloseBtn">닫기</button>
           <button class="btn primary" id="authSubmitBtn">로그인</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop hidden" id="saveModal">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
+        <h3 id="saveTitle">그림 저장</h3>
+        <label>그림 제목
+          <input type="text" id="drawingTitle" placeholder="예: 파란 고양이" />
+        </label>
+        <label>공개 범위
+          <select id="visibilitySelect">
+            <option value="public">공개</option>
+            <option value="private">비공개</option>
+          </select>
+        </label>
+        <div class="row">
+          <button class="btn" id="saveCloseBtn">닫기</button>
+          <button class="btn primary" id="saveConfirmBtn">저장하기</button>
         </div>
       </div>
     </div>
